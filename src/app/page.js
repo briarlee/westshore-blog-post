@@ -1,63 +1,85 @@
-import Image from "next/image";
 
-export default function Home() {
+import Link from 'next/link';
+import Image from 'next/image'; // 👈 引入图片优化引擎
+
+async function getPosts() {
+  // Fetch 6 posts with images embedded
+  const res = await fetch(
+    'https://www.westshorefurniture.com/wp-json/wp/v2/posts?per_page=18&_embed',
+    { next: { revalidate: 3600 } }
+  );
+
+  if (!res.ok) {
+    console.error('API Fetch Error:', res.status, res.statusText);
+    throw new Error('Failed to fetch data from West Shore Furniture');
+  }
+
+  return res.json();
+}
+
+// Forcing a hot reload to refresh the application.
+export default async function Home() {
+  const posts = await getPosts();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+    <div className="min-h-screen bg-gray-50 font-sans">
+      {/* Hero Section */}
+      <section className="bg-white py-20 text-center border-b px-4">
+        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+          West Shore Furniture
+        </h1>
+        <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          Modern Living & Educational Environments. Experience the headless performance.
+        </p>
+        <button className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700 transition shadow-lg font-medium">
+          Browse Collection
+        </button>
+      </section>
+
+      {/* Blog Grid */}
+      <main className="max-w-7xl mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold text-gray-800 mb-10 text-center">
+          Latest Insights
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map((post) => (
+            <article key={post.id} className="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col h-full border border-gray-100">
+              
+              {/* Image Area with Optimization */}
+              <div className="h-64 w-full relative group overflow-hidden bg-gray-100">
+                {post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0].source_url ? (
+                  <Image 
+                    src={post._embedded['wp:featuredmedia'][0].source_url} 
+                    alt={post.title.rendered}
+                    fill // ✅ 让图片自动填满容器
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // ✅ SEO 关键：告诉浏览器按需下载
+                    className="object-cover transform group-hover:scale-105 transition duration-700 ease-out"
+                    priority={false}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                    <span className="text-gray-400 font-medium">No Image Available</span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-8 flex flex-col flex-grow">
+                <h3 className="text-2xl font-bold mb-3 text-gray-900 line-clamp-2 leading-tight">
+                  {post.title.rendered}
+                </h3>
+                {/* Excerpt handling */}
+                <div 
+                  className="text-gray-600 mb-6 line-clamp-3 text-base flex-grow leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: post.excerpt.rendered }}
+                />
+                <Link href={`/post/${post.id}`} className="text-blue-600 font-bold hover:text-blue-800 uppercase tracking-wide text-sm mt-auto inline-flex items-center">
+                  Read Article 
+                  <span className="ml-2">→</span>
+                </Link>
+              </div>
+            </article>
+          ))}
         </div>
       </main>
     </div>
