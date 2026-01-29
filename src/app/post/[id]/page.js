@@ -16,10 +16,15 @@ export async function generateMetadata({ params }) {
 
   // Strip HTML tags from excerpt for description
   const description = post.excerpt.rendered.replace(/<[^>]*>?/gm, '').slice(0, 160);
+  
+  // 👇 获取 WordPress 的 slug (URL 友好的名称)
+  const wordpressSlug = post.slug;
 
   return {
     title: `${post.title.rendered} | West Shore Furniture`,
     description: description,
+    // 👇 添加 Canonical 标签 - 指向 WordPress 原网站
+    canonical: `https://www.westshorefurniture.com/blog/${wordpressSlug}`,
     openGraph: {
       title: post.title.rendered,
       description: description,
