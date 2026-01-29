@@ -10,7 +10,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'westshorefurniture.com', // 👈 加这一行（没有www）
+        hostname: 'westshorefurniture.com',
         port: '',
         pathname: '/wp-content/uploads/**',
       },
@@ -23,6 +23,19 @@ const nextConfig = {
         hostname: 'secure.gravatar.com',
       },
     ],
+  },
+  headers: async () => {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, s-maxage=3600',
+          },
+        ],
+      },
+    ];
   },
 };
 
